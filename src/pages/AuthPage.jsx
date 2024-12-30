@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, Col, Form, Image, Modal, Row } from "react-bootstrap";
 import axios from "axios";
 import useLocalStorage from "use-local-storage";
-import { useNavigate } from "r  qeact-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function AuthPage() {
     const loginImage = "https://sig1.co/img-twitter-1";
