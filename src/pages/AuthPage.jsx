@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, Col, Form, Image, Modal, Row } from "react-bootstrap";
 import axios from "axios";
 import useLocalStorage from "use-local-storage";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "r  qeact-router-dom";
 
 export default function AuthPage() {
     const loginImage = "https://sig1.co/img-twitter-1";
@@ -13,6 +13,7 @@ export default function AuthPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [authToken, setAuthToken] = useLocalStorage("authToken", "");
+    const [error, setError] = useState("");
 
     const navigate = useNavigate();
 
@@ -28,7 +29,7 @@ export default function AuthPage() {
             const res = await axios.post(`${url}/signup`, { username, password });
             console.log(res.data);
         } catch (error) {
-            console.error(error);
+            setError(error.response?.data?.message || "Something went wrong.");
         }
     };
 
@@ -41,7 +42,7 @@ export default function AuthPage() {
                 console.log("Login was successful, token saved");
             }
         } catch (error) {
-            console.error(error);
+            setError(error.response?.data?.message || "Invalid login credentials.");
         }
     };
     const handleClose = () => setModalShow(null);
@@ -79,16 +80,15 @@ export default function AuthPage() {
                         animation={false}
                         centered
                         >
-                    <Modal.Body>
-                        <h2 className="mb-4" style={{ fontWeight: "bold"}}>
-                            {modalShow === "SignUp"
-                            ? "Create your account"
-                            : "Log in to your account"}
-                        </h2>
-                        <Form
-                            className="d-grid gap-2 px-5"
-                            onSubmit={modalShow === "SignUp" ? handleSignUp : handleLogin}
-                        >
+                        <Modal.Body>
+                            <h2 className="mb-4" style={{ fontWeight: "bold" }}>
+                                {modalShow === "SignUp" ? "Create your account" : "Log in to your account"}
+                            </h2>
+                            {error && <p className="text-danger">{error}</p>} {/* Display the error message */}
+                            <Form
+                                className="d-grid gap-2 px-5"
+                                onSubmit={modalShow === "SignUp" ? handleSignUp : handleLogin}
+                            >
                             <Form.Group className="mb-3" controlId="formBasicEmail">
                                 <Form.Control
                                 onChange={(e) => setUsername(e.target.value)}
