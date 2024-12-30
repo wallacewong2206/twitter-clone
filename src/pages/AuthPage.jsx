@@ -25,6 +25,15 @@ export default function AuthPage() {
 
     const handleSignUp = async (e) => {
         e.preventDefault();
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+        if (!passwordRegex.test(password)) {
+            return setError(
+                "Password must be at least 8 characters long, include uppercase, lowercase, a number, and a special character."
+            );
+        }
+
         try {
             const res = await axios.post(`${url}/signup`, { username, password });
             console.log(res.data);
