@@ -16,7 +16,6 @@ export default function AuthPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authToken, setAuthToken] = useLocalStorage("authToken", "");
-
   const navigate = useNavigate();
 
   useEffect(() => {
