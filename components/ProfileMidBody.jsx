@@ -25,6 +25,10 @@ export default function ProfileMidBody() {
     }
   }, []);
 
+  const handlePostDelete = (postId) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+  };
+
 
   return (
     <Col sm={6} className="bg-light" style={{ border: "1px solid lightgrey" }}>
@@ -82,7 +86,7 @@ export default function ProfileMidBody() {
         </Nav.Item>
       </Nav>
       {posts.length > 0 && posts.map((post) => (
-        <ProfilePostCard key={post.id} content={post.content} postId={post.id}/>
+        <ProfilePostCard key={post.id} content={post.content} postId={post.id} userId={post.user_id} onPostDelete={handlePostDelete}/>
       ))}
     </Col>
   )
