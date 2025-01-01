@@ -55,7 +55,7 @@ export default function ProfileMidBody() {
       </Row>
 
       <p className="mt-5" style={{ margin: 0, fontWeight: "bold", fontSize: "15px" }}>
-        Haris
+        Wallace Wong
       </p>
 
       <p style={{ marginBottom: "2px"}}>@wallace.wong</p>
