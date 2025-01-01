@@ -9,7 +9,7 @@ export default function ProfilePostCard({ content, postId, userId, onPostDelete 
   const [updatedContent, setUpdatedContent] = useState(content); // Editable content
 
   const BASE_URL = "https://6cd0850f-8db1-4bea-8232-8e4cc4b8ec25-00-1iyw4r05fi4eq.pike.replit.dev:3000";
-  const pic = "https://pbs.twimg.com/profile_images/1587405892437221376/h167Jlb2_400x400.jpg";
+  const pic = "https://pbs.twimg.com/profile_images/1873974185766060032/gRZc3N-3_400x400.jpg";
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");

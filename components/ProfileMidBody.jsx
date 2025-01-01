@@ -5,8 +5,8 @@ import ProfilePostCard from "./ProfilePostCard";
 
 export default function ProfileMidBody() {
   const [posts, setPosts] = useState([]);
-  const url = "https://pbs.twimg.com/profile_banners/83072625/1602845571/1500x500";
-  const pic = "https://pbs.twimg.com/profile_images/1587405892437221376/h167Jlb2_400x400.jpg";
+  const url = "https://pbs.twimg.com/profile_banners/44196397/1726163678/1500x500";
+  const pic = "https://pbs.twimg.com/profile_images/1873974185766060032/gRZc3N-3_400x400.jpg";
 
   // Fetch posts based on user id
   const fetchPosts = (userId) => {
