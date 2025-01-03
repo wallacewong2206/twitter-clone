@@ -1,16 +1,22 @@
 import { Button } from "react-bootstrap";
 
-export default function IconButton({ isTop, className, onClick, text }) {
-  let margin = "";
+export default function IconButton({
+  isTop,
+  isBottom,
+  className,
+  onClick,
+  text,
+}) {
+  let margin;
 
   if (isTop) {
     margin = `light rounded-pill`;
+  } else if (isBottom) {
+    margin = `light mt-auto rounded-pill`;
   } else {
     margin = `light rounded-pill`;
   }
-
   const iconMargin = text ? " me-3" : " ";
-
   return (
     <Button variant={margin} onClick={onClick}>
       <i
@@ -21,4 +27,3 @@ export default function IconButton({ isTop, className, onClick, text }) {
     </Button>
   );
 }
-
