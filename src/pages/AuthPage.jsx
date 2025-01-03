@@ -20,6 +20,8 @@ export default function AuthPage() {
   const auth = getAuth();
   // const [authToken, setAuthToken] = useLocalStorage("authToken", "");
   const { currentUser } = useContext(AuthContext);
+  const [errorMessage, setErrorMessage] = useState("");
+
 
   useEffect(() => {
     if (currentUser) navigate("/profile");
@@ -36,21 +38,51 @@ export default function AuthPage() {
       console.error(error);
     }
   };
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     await signInWithEmailAndPassword(auth, username, password);
+  //     // const res = await axios.post(`${url}/login`, { username, password });
+  //     // // res.data is not empty and auth is true, and token is not empty
+  //     // if (res.data && res.data.auth === true && res.data.token) {
+  //     //   setAuthToken(res.data.token);
+  //     //   console.log("login was succesful, token saved");
+  //     }
+  //     // console.log(res.data);
+  //     catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    setErrorMessage(""); // Clear any previous error messages
+
     try {
       await signInWithEmailAndPassword(auth, username, password);
-      // const res = await axios.post(`${url}/login`, { username, password });
-      // // res.data is not empty and auth is true, and token is not empty
-      // if (res.data && res.data.auth === true && res.data.token) {
-      //   setAuthToken(res.data.token);
-      //   console.log("login was succesful, token saved");
+    } catch (error) {
+      // Set error messages based on the error code
+      switch (error.code) {
+        case "auth/user-not-found":
+          setErrorMessage("User not found. Please check your email.");
+          break;
+        case "auth/wrong-password":
+          setErrorMessage("Incorrect password. Please try again.");
+          break;
+        case "auth/invalid-email":
+          setErrorMessage("Invalid email format.");
+          break;
+        case "auth/too-many-requests":
+          setErrorMessage("Too many failed login attempts. Try again later.");
+          break;
+        default:
+          setErrorMessage("Login failed. Please check your credentials.");
+          break;
       }
-      // console.log(res.data);
-      catch (error) {
       console.error(error);
     }
   };
+
 
   const provider = new GoogleAuthProvider();
   const handleGoogleLogin = async(e) => {
@@ -111,6 +143,55 @@ export default function AuthPage() {
           centered
         >
           <Modal.Body>
+  <h2 className="mb-4" style={{ fontWeight: "bold" }}>
+    {modalShow === "signup"
+      ? "Create your account"
+      : "Log in to your account"}
+  </h2>
+
+  {/* Display error message */}
+  {errorMessage && (
+    <p className="text-danger text-center mb-3">
+      {errorMessage}
+    </p>
+  )}
+
+  <Form
+    className="d-grid gap-2 px-5"
+    onSubmit={modalShow === "signup" ? handleSignUp : handleLogin}
+  >
+    <Form.Group className="mb-3" controlId="formBasicEmail">
+      <Form.Control
+        onChange={(e) => setUsername(e.target.value)}
+        type="email"
+        placeholder="Enter email"
+      />
+    </Form.Group>
+
+    <Form.Group className="mb-3" controlId="formBasicPassword">
+      <Form.Control
+        onChange={(e) => setPassword(e.target.value)}
+        type="password"
+        placeholder="Password"
+      />
+    </Form.Group>
+
+    <p style={{ fontSize: 12 }}>
+      By signing up, you agree to the Terms of Service and Privacy
+      Policy, including Cookie Use. SigmaTweets may use your contact
+      information, including your email address and phone number for
+      purposes outlined in our Privacy Policy, like keeping your
+      account secure and personalising our services, including ads.
+      Learn more. Others will be able to find you by email or phone
+      number, when provided, unless you choose otherwise here.
+    </p>
+    <Button className="rounded-pill" type="submit">
+      {modalShow === "signup" ? "Sign up" : "Log in"}
+    </Button>
+  </Form>
+</Modal.Body>
+
+          {/* <Modal.Body>
             <h2 className="mb-4" style={{ fontWeight: "bold" }}>
               {modalShow === "signup"
                 ? "Create your account"
@@ -150,7 +231,7 @@ export default function AuthPage() {
                 {modalShow === "signup" ? "Sign up" : "Log in"}
               </Button>
             </Form>
-          </Modal.Body>
+          </Modal.Body> */}
         </Modal>
       </Col>
     </Row>
