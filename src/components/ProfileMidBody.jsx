@@ -18,18 +18,18 @@ export default function ProfileMidBody() {
   //   .catch((error) => console.error("Error:", error));
   // }
 
-const dispatch = useDispatch();
+// const dispatch = useDispatch();
 const posts = useSelector(store => store.posts.posts)
 const loading = useSelector(store => store.posts.loading)
 
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      const decodedToken = jwtDecode(token);
-      const userId = decodedToken.id;
-      dispatch(fetchPostsByUser(userId));
-    }
-  }, [dispatch]);
+  // useEffect(() => {
+  //   const token = localStorage.getItem("authToken");
+  //   if (token) {
+  //     const decodedToken = jwtDecode(token);
+  //     const userId = decodedToken.id;
+  //     dispatch(fetchPostsByUser(userId));
+  //   }
+  // }, [dispatch]);
 
 
   return (
