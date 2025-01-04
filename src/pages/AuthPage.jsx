@@ -6,6 +6,7 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   signInWithPopup,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 
 import { useEffect, useState, useContext } from "react";
@@ -19,9 +20,12 @@ export default function AuthPage() {
   const [modalShow, setModalShow] = useState(null); // Modal control
   const handleShowSignUp = () => setModalShow("signup");
   const handleShowLogin = () => setModalShow("login");
+  const handleShowReset = () => setModalShow("reset");
   const [email, setEmail] = useState(""); // Email input
   const [password, setPassword] = useState(""); // Password input
   const [errorMessage, setErrorMessage] = useState(""); // Error message state
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
 
   const navigate = useNavigate();
   const auth = getAuth();
@@ -57,39 +61,26 @@ export default function AuthPage() {
     }
   };
 
-  // Google Login
-  const googleProvider = new GoogleAuthProvider();
-  const handleGoogleLogin = async (e) => {
-    e.preventDefault();
+  // Handle Social Logins
+  const handleSocialLogin = async (provider) => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Google Login Error:", error);
-      setErrorMessage("Failed to login with Google.");
+      console.error("Social Login Error:", error);
+      setErrorMessage("Failed to login with social account.");
     }
   };
 
-  // Facebook Login
-  const facebookProvider = new FacebookAuthProvider();
-  const handleFacebookLogin = async (e) => {
+  // Handle Password Reset
+  const handlePasswordReset = async (e) => {
     e.preventDefault();
+    setResetMessage("");
     try {
-      await signInWithPopup(auth, facebookProvider);
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetMessage("Password reset email sent successfully.");
     } catch (error) {
-      console.error("Facebook Login Error:", error);
-      setErrorMessage("Failed to login with Facebook.");
-    }
-  };
-
-  // Apple Login
-  const appleProvider = new OAuthProvider("apple.com");
-  const handleAppleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      await signInWithPopup(auth, appleProvider);
-    } catch (error) {
-      console.error("Apple Login Error:", error);
-      setErrorMessage("Failed to login with Apple ID.");
+      console.error("Password Reset Error:", error);
+      setResetMessage("Failed to send password reset email.");
     }
   };
 
@@ -156,56 +147,50 @@ export default function AuthPage() {
             Sign in
           </Button>
 
-          {/* Social Media Login Buttons */}
           <div className="d-flex justify-content-center mt-3">
-            <Button
-              variant="outline-secondary"
-              className="rounded-circle mx-2"
-              onClick={handleGoogleLogin}
-            >
-              <i className="bi bi-google"></i>
-            </Button>
-            <Button
-              variant="outline-secondary"
-              className="rounded-circle mx-2"
-              onClick={handleAppleLogin}
-            >
-              <i className="bi bi-apple"></i>
-            </Button>
-            <Button
-              variant="outline-secondary"
-              className="rounded-circle mx-2"
-              onClick={handleFacebookLogin}
-            >
-              <i className="bi bi-facebook"></i>
-            </Button>
-          </div>
+              <Button
+                variant="outline-secondary"
+                className="rounded-circle mx-2"
+                onClick={() => handleSocialLogin(new GoogleAuthProvider())}
+              >
+                <i className="bi bi-google"></i>
+              </Button>
+              <Button
+                variant="outline-secondary"
+                className="rounded-circle mx-2"
+                onClick={() => handleSocialLogin(new OAuthProvider("apple.com"))}
+              >
+                <i className="bi bi-apple"></i>
+              </Button>
+              <Button
+                variant="outline-secondary"
+                className="rounded-circle mx-2"
+                onClick={() => handleSocialLogin(new FacebookAuthProvider())}
+              >
+                <i className="bi bi-facebook"></i>
+              </Button>
+            </div>
+
         </Col>
 
         <Modal
-          show={modalShow !== null}
+          show={modalShow === "login"}
           onHide={handleClose}
           animation={false}
           centered
         >
           <Modal.Body>
             <h2 className="mb-4" style={{ fontWeight: "bold" }}>
-              {modalShow === "signup"
-                ? "Create your account"
-                : "Log in to your account"}
+              Log in to your account
             </h2>
 
-            {/* Error Message */}
             {errorMessage && (
               <p className="text-danger text-center mb-3">
                 {errorMessage}
               </p>
             )}
 
-            <Form
-              className="d-grid gap-2 px-5"
-              onSubmit={modalShow === "signup" ? handleSignUp : handleLogin}
-            >
+            <Form className="d-grid gap-2 px-5" onSubmit={handleLogin}>
               <Form.Group className="mb-3" controlId="formBasicEmail">
                 <Form.Control
                   onChange={(e) => setEmail(e.target.value)}
@@ -223,7 +208,89 @@ export default function AuthPage() {
               </Form.Group>
 
               <Button className="rounded-pill" type="submit">
-                {modalShow === "signup" ? "Sign up" : "Log in"}
+                Log in
+              </Button>
+            </Form>
+
+            <Button
+              className="rounded-pill mt-3 d-grid mx-auto"
+              variant="outline-secondary"
+              onClick={handleShowReset}
+            >
+              Reset Password via Email
+            </Button>
+          </Modal.Body>
+        </Modal>
+
+        <Modal
+          show={modalShow === "reset"}
+          onHide={handleClose}
+          animation={false}
+          centered
+        >
+          <Modal.Body>
+            <h2 className="mb-4" style={{ fontWeight: "bold" }}>
+              Reset Password
+            </h2>
+
+            {resetMessage && (
+              <p className="text-success text-center mb-3">
+                {resetMessage}
+              </p>
+            )}
+
+            <Form className="d-grid gap-2 px-5" onSubmit={handlePasswordReset}>
+              <Form.Group className="mb-3" controlId="formResetEmail">
+                <Form.Control
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  type="email"
+                  placeholder="Enter email"
+                />
+              </Form.Group>
+
+              <Button className="rounded-pill" type="submit">
+                Send Reset Password Email
+              </Button>
+            </Form>
+          </Modal.Body>
+        </Modal>
+
+        <Modal
+          show={modalShow === "signup"}
+          onHide={handleClose}
+          animation={false}
+          centered
+        >
+          <Modal.Body>
+            <h2 className="mb-4" style={{ fontWeight: "bold" }}>
+              Create your account
+            </h2>
+
+            {errorMessage && (
+              <p className="text-danger text-center mb-3">
+                {errorMessage}
+              </p>
+            )}
+
+            <Form className="d-grid gap-2 px-5" onSubmit={handleSignUp}>
+              <Form.Group className="mb-3" controlId="formSignUpEmail">
+                <Form.Control
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  placeholder="Enter email"
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3" controlId="formSignUpPassword">
+                <Form.Control
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  placeholder="Password"
+                />
+              </Form.Group>
+
+              <Button className="rounded-pill" type="submit">
+                Sign Up
               </Button>
             </Form>
           </Modal.Body>
