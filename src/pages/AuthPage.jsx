@@ -7,12 +7,16 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   sendPasswordResetEmail,
+  RecaptchaVerifier,
+  signInWithPhoneNumber
 } from "firebase/auth";
 
 import { useEffect, useState, useContext } from "react";
 import { Button, Col, Form, Image, Modal, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../components/AuthProvider";
+import { auth } from "../firebase";
+
 
 export default function AuthPage() {
   const loginImage = "https://sig1.co/img-twitter-1";
@@ -35,6 +39,33 @@ export default function AuthPage() {
   useEffect(() => {
     if (currentUser) navigate("/profile");
   }, [currentUser, navigate]);
+
+  // Initialize reCAPTCHA verifier
+  // useEffect(() => {
+  //   if (!window.recaptchaVerifier) {
+  //     window.recaptchaVerifier = new RecaptchaVerifier('phone-sign-in-button', {
+  //       'size': 'invisible',
+  //       'callback': (response) => {
+  //         // reCAPTCHA solved, allow signInWithPhoneNumber.
+  //       }
+  //     }, auth);
+  //   }
+  // }, [auth]);
+
+  useEffect(() => {
+    if (auth && !window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'phone-sign-in-button', {
+        size: 'invisible',
+        callback: (response) => {
+          console.log("reCAPTCHA verified!");
+        },
+        'expired-callback': () => {
+          console.log("reCAPTCHA expired. Please refresh.");
+        }
+      });
+    }
+  }, [auth]);
+
 
   // Handle Signup
   const handleSignUp = async (e) => {
@@ -84,6 +115,22 @@ export default function AuthPage() {
     }
   };
 
+  // Handle Phone Login
+  const handlePhoneLogin = async () => {
+    const phoneNumber = window.prompt("Enter your phone number (e.g., +60123456789):");
+    if (!phoneNumber) return;
+
+    try {
+      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+      // SMS sent. Prompt user to type the code from the message, then sign the user in with confirmationResult.confirm(code).
+      const code = window.prompt("Enter the verification code you received");
+      await confirmationResult.confirm(code);
+    } catch (error) {
+      console.error("Phone Login Error:", error);
+      setErrorMessage("Failed to login with phone number.");
+    }
+  };
+
   // Handle Firebase Auth Errors
   const handleAuthError = (code) => {
     switch (code) {
@@ -119,179 +166,75 @@ export default function AuthPage() {
         <Image src={loginImage} fluid />
       </Col>
       <Col sm={6} className="p-4">
-        <i
-          className="bi bi-twitter"
-          style={{ fontSize: 50, color: "dodgerblue" }}
-        ></i>
-
+        <i className="bi bi-twitter" style={{ fontSize: 50, color: "dodgerblue" }}></i>
         <p className="mt-5" style={{ fontSize: 64 }}>Happening Now</p>
         <h2 className="my-5" style={{ fontSize: 31 }}>Join Twitter today.</h2>
-
         <Col sm={5} className="d-grid gap-2">
-          <Button
-            className="rounded-pill"
-            variant="outline-primary"
-            onClick={handleShowSignUp}
-          >
+          <Button className="rounded-pill" variant="outline-primary" onClick={handleShowSignUp}>
             Create an account
           </Button>
           <p style={{ fontSize: "12px" }}>By signing up, you agree to the terms.</p>
-          <p className="mt-5" style={{ fontWeight: "bold" }}>
-            Already have an account?
-          </p>
-          <Button
-            className="rounded-pill"
-            variant="outline-primary"
-            onClick={handleShowLogin}
-          >
+          <p className="mt-5" style={{ fontWeight: "bold" }}>Already have an account?</p>
+          <Button className="rounded-pill" variant="outline-primary" onClick={handleShowLogin}>
             Sign in
           </Button>
-
           <div className="d-flex justify-content-center mt-3">
-              <Button
-                variant="outline-secondary"
-                className="rounded-circle mx-2"
-                onClick={() => handleSocialLogin(new GoogleAuthProvider())}
-              >
-                <i className="bi bi-google"></i>
-              </Button>
-              <Button
-                variant="outline-secondary"
-                className="rounded-circle mx-2"
-                onClick={() => handleSocialLogin(new OAuthProvider("apple.com"))}
-              >
-                <i className="bi bi-apple"></i>
-              </Button>
-              <Button
-                variant="outline-secondary"
-                className="rounded-circle mx-2"
-                onClick={() => handleSocialLogin(new FacebookAuthProvider())}
-              >
-                <i className="bi bi-facebook"></i>
-              </Button>
-            </div>
-
+            <Button variant="outline-secondary" className="rounded-circle mx-2" onClick={() => handleSocialLogin(new GoogleAuthProvider())}>
+              <i className="bi bi-google"></i>
+            </Button>
+            <Button variant="outline-secondary" className="rounded-circle mx-2" onClick={() => handleSocialLogin(new OAuthProvider("apple.com"))}>
+              <i className="bi bi-apple"></i>
+            </Button>
+            <Button variant="outline-secondary" className="rounded-circle mx-2" onClick={() => handleSocialLogin(new FacebookAuthProvider())}>
+              <i className="bi bi-facebook"></i>
+            </Button>
+            <Button id="phone-sign-in-button" variant="outline-secondary" className="rounded-circle mx-2" onClick={handlePhoneLogin}>
+              <i className="bi bi-phone"></i>
+            </Button>
+          </div>
         </Col>
-
-        <Modal
-          show={modalShow === "login"}
-          onHide={handleClose}
-          animation={false}
-          centered
-        >
+        <Modal show={modalShow === "signup"} onHide={handleClose} animation={false} centered>
           <Modal.Body>
-            <h2 className="mb-4" style={{ fontWeight: "bold" }}>
-              Log in to your account
-            </h2>
-
-            {errorMessage && (
-              <p className="text-danger text-center mb-3">
-                {errorMessage}
-              </p>
-            )}
-
+            <h2 className="mb-4" style={{ fontWeight: "bold" }}>Create an account</h2>
+            {errorMessage && <p className="text-danger text-center mb-3">{errorMessage}</p>}
+            <Form className="d-grid gap-2 px-5" onSubmit={handleSignUp}>
+              <Form.Group className="mb-3" controlId="formBasicEmail">
+                <Form.Control onChange={(e) => setEmail(e.target.value)} type="email" placeholder="Enter email" />
+              </Form.Group>
+              <Form.Group className="mb-3" controlId="formBasicPassword">
+                <Form.Control onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password" />
+              </Form.Group>
+              <Button className="rounded-pill" type="submit">Sign Up</Button>
+            </Form>
+          </Modal.Body>
+        </Modal>
+        <Modal show={modalShow === "login"} onHide={handleClose} animation={false} centered>
+          <Modal.Body>
+            <h2 className="mb-4" style={{ fontWeight: "bold" }}>Log in to your account</h2>
+            {errorMessage && <p className="text-danger text-center mb-3">{errorMessage}</p>}
             <Form className="d-grid gap-2 px-5" onSubmit={handleLogin}>
               <Form.Group className="mb-3" controlId="formBasicEmail">
-                <Form.Control
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  placeholder="Enter email"
-                />
+                <Form.Control onChange={(e) => setEmail(e.target.value)} type="email" placeholder="Enter email" />
               </Form.Group>
-
               <Form.Group className="mb-3" controlId="formBasicPassword">
-                <Form.Control
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="password"
-                  placeholder="Password"
-                />
+                <Form.Control onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password" />
               </Form.Group>
-
-              <Button className="rounded-pill" type="submit">
-                Log in
-              </Button>
+              <Button className="rounded-pill" type="submit">Log in</Button>
             </Form>
-
-            <Button
-              className="rounded-pill mt-3 d-grid mx-auto"
-              variant="outline-secondary"
-              onClick={handleShowReset}
-            >
+            <Button className="rounded-pill mt-3 d-grid mx-auto" variant="outline-secondary" onClick={handleShowReset}>
               Reset Password via Email
             </Button>
           </Modal.Body>
         </Modal>
-
-        <Modal
-          show={modalShow === "reset"}
-          onHide={handleClose}
-          animation={false}
-          centered
-        >
+        <Modal show={modalShow === "reset"} onHide={handleClose} animation={false} centered>
           <Modal.Body>
-            <h2 className="mb-4" style={{ fontWeight: "bold" }}>
-              Reset Password
-            </h2>
-
-            {resetMessage && (
-              <p className="text-success text-center mb-3">
-                {resetMessage}
-              </p>
-            )}
-
+            <h2 className="mb-4" style={{ fontWeight: "bold" }}>Reset Password</h2>
+            {resetMessage && <p className="text-success text-center mb-3">{resetMessage}</p>}
             <Form className="d-grid gap-2 px-5" onSubmit={handlePasswordReset}>
               <Form.Group className="mb-3" controlId="formResetEmail">
-                <Form.Control
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  type="email"
-                  placeholder="Enter email"
-                />
+                <Form.Control onChange={(e) => setResetEmail(e.target.value)} type="email" placeholder="Enter email" />
               </Form.Group>
-
-              <Button className="rounded-pill" type="submit">
-                Send Reset Password Email
-              </Button>
-            </Form>
-          </Modal.Body>
-        </Modal>
-
-        <Modal
-          show={modalShow === "signup"}
-          onHide={handleClose}
-          animation={false}
-          centered
-        >
-          <Modal.Body>
-            <h2 className="mb-4" style={{ fontWeight: "bold" }}>
-              Create your account
-            </h2>
-
-            {errorMessage && (
-              <p className="text-danger text-center mb-3">
-                {errorMessage}
-              </p>
-            )}
-
-            <Form className="d-grid gap-2 px-5" onSubmit={handleSignUp}>
-              <Form.Group className="mb-3" controlId="formSignUpEmail">
-                <Form.Control
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  placeholder="Enter email"
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3" controlId="formSignUpPassword">
-                <Form.Control
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="password"
-                  placeholder="Password"
-                />
-              </Form.Group>
-
-              <Button className="rounded-pill" type="submit">
-                Sign Up
-              </Button>
+              <Button className="rounded-pill" type="submit">Send Reset Password Email</Button>
             </Form>
           </Modal.Body>
         </Modal>
