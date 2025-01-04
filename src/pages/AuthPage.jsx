@@ -1,96 +1,122 @@
-import { GoogleAuthProvider, createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-// import axios from "axios";
+import {
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  OAuthProvider,
+  createUserWithEmailAndPassword,
+  getAuth,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
+
 import { useEffect, useState, useContext } from "react";
 import { Button, Col, Form, Image, Modal, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-// import useLocalStorage from "use-local-storage";
 import { AuthContext } from "../components/AuthProvider";
 
 export default function AuthPage() {
   const loginImage = "https://sig1.co/img-twitter-1";
-  // const url =
-  //   "https://6cd0850f-8db1-4bea-8232-8e4cc4b8ec25-00-1iyw4r05fi4eq.pike.replit.dev:3000";
-  // values: null (no modal show), "login", "signup"
-  const [modalShow, setModalShow] = useState(null);
+
+  const [modalShow, setModalShow] = useState(null); // Modal control
   const handleShowSignUp = () => setModalShow("signup");
   const handleShowLogin = () => setModalShow("login");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(""); // Email input
+  const [password, setPassword] = useState(""); // Password input
+  const [errorMessage, setErrorMessage] = useState(""); // Error message state
+
   const navigate = useNavigate();
   const auth = getAuth();
-  // const [authToken, setAuthToken] = useLocalStorage("authToken", "");
   const { currentUser } = useContext(AuthContext);
-  const [errorMessage, setErrorMessage] = useState("");
 
-
+  // Redirect to profile if user is logged in
   useEffect(() => {
     if (currentUser) navigate("/profile");
   }, [currentUser, navigate]);
 
+  // Handle Signup
   const handleSignUp = async (e) => {
     e.preventDefault();
+    setErrorMessage(""); // Clear errors
     try {
-      // const res = await axios.post(`${url}/signup`, { username, password });
-      // console.log(res.data);
-      const res = await createUserWithEmailAndPassword(auth, username, password);
-      console.log(res.user);
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("User signed up:", res.user);
     } catch (error) {
-      console.error(error);
+      console.error("Signup Error:", error);
+      handleAuthError(error.code); // Handle specific errors
     }
   };
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     await signInWithEmailAndPassword(auth, username, password);
-  //     // const res = await axios.post(`${url}/login`, { username, password });
-  //     // // res.data is not empty and auth is true, and token is not empty
-  //     // if (res.data && res.data.auth === true && res.data.token) {
-  //     //   setAuthToken(res.data.token);
-  //     //   console.log("login was succesful, token saved");
-  //     }
-  //     // console.log(res.data);
-  //     catch (error) {
-  //     console.error(error);
-  //   }
-  // };
 
+  // Handle Login
   const handleLogin = async (e) => {
     e.preventDefault();
-    setErrorMessage(""); // Clear any previous error messages
-
+    setErrorMessage(""); // Clear errors
     try {
-      await signInWithEmailAndPassword(auth, username, password);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      // Set error messages based on the error code
-      switch (error.code) {
-        case "auth/user-not-found":
-          setErrorMessage("User not found. Please check your email.");
-          break;
-        case "auth/wrong-password":
-          setErrorMessage("Incorrect password. Please try again.");
-          break;
-        case "auth/invalid-email":
-          setErrorMessage("Invalid email format.");
-          break;
-        case "auth/too-many-requests":
-          setErrorMessage("Too many failed login attempts. Try again later.");
-          break;
-        default:
-          setErrorMessage("Login failed. Please check your credentials.");
-          break;
-      }
-      console.error(error);
+      console.error("Login Error:", error);
+      handleAuthError(error.code); // Handle specific errors
     }
   };
 
-
-  const provider = new GoogleAuthProvider();
-  const handleGoogleLogin = async(e) => {
+  // Google Login
+  const googleProvider = new GoogleAuthProvider();
+  const handleGoogleLogin = async (e) => {
     e.preventDefault();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      console.error(error);
+      console.error("Google Login Error:", error);
+      setErrorMessage("Failed to login with Google.");
+    }
+  };
+
+  // Facebook Login
+  const facebookProvider = new FacebookAuthProvider();
+  const handleFacebookLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithPopup(auth, facebookProvider);
+    } catch (error) {
+      console.error("Facebook Login Error:", error);
+      setErrorMessage("Failed to login with Facebook.");
+    }
+  };
+
+  // Apple Login
+  const appleProvider = new OAuthProvider("apple.com");
+  const handleAppleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithPopup(auth, appleProvider);
+    } catch (error) {
+      console.error("Apple Login Error:", error);
+      setErrorMessage("Failed to login with Apple ID.");
+    }
+  };
+
+  // Handle Firebase Auth Errors
+  const handleAuthError = (code) => {
+    switch (code) {
+      case "auth/email-already-in-use":
+        setErrorMessage("Email is already in use.");
+        break;
+      case "auth/invalid-email":
+        setErrorMessage("Invalid email format.");
+        break;
+      case "auth/weak-password":
+        setErrorMessage("Password must be at least 6 characters.");
+        break;
+      case "auth/user-not-found":
+        setErrorMessage("User not found. Please check your email.");
+        break;
+      case "auth/wrong-password":
+        setErrorMessage("Incorrect password. Please try again.");
+        break;
+      case "auth/too-many-requests":
+        setErrorMessage("Too many failed attempts. Try again later.");
+        break;
+      default:
+        setErrorMessage("Authentication failed. Please try again.");
+        break;
     }
   };
 
@@ -107,24 +133,18 @@ export default function AuthPage() {
           style={{ fontSize: 50, color: "dodgerblue" }}
         ></i>
 
-        <p className="mt-5" style={{ fontSize: 64 }}>
-          Happening Now
-        </p>
-        <h2 className="my-5" style={{ fontSize: 31 }}>
-          Join Twitter today.
-        </h2>
+        <p className="mt-5" style={{ fontSize: 64 }}>Happening Now</p>
+        <h2 className="my-5" style={{ fontSize: 31 }}>Join Twitter today.</h2>
+
         <Col sm={5} className="d-grid gap-2">
-          <Button className="rounded-pill" variant="outline-dark" onClick={handleGoogleLogin}>
-            <i className="bi bi-google"></i> Sign up with Google
-          </Button>
-          <Button className="rounded-pill" variant="outline-dark">
-            <i className="bi bi-apple"></i> Sign up with Apple
-          </Button>
-          <p style={{ textAlign: "center" }}>or</p>
-          <Button className="rounded-pill" onClick={handleShowSignUp}>
+          <Button
+            className="rounded-pill"
+            variant="outline-primary"
+            onClick={handleShowSignUp}
+          >
             Create an account
           </Button>
-          <p style={{ fontSize: "12px" }}> Agree to terms</p>
+          <p style={{ fontSize: "12px" }}>By signing up, you agree to the terms.</p>
           <p className="mt-5" style={{ fontWeight: "bold" }}>
             Already have an account?
           </p>
@@ -135,7 +155,33 @@ export default function AuthPage() {
           >
             Sign in
           </Button>
+
+          {/* Social Media Login Buttons */}
+          <div className="d-flex justify-content-center mt-3">
+            <Button
+              variant="outline-secondary"
+              className="rounded-circle mx-2"
+              onClick={handleGoogleLogin}
+            >
+              <i className="bi bi-google"></i>
+            </Button>
+            <Button
+              variant="outline-secondary"
+              className="rounded-circle mx-2"
+              onClick={handleAppleLogin}
+            >
+              <i className="bi bi-apple"></i>
+            </Button>
+            <Button
+              variant="outline-secondary"
+              className="rounded-circle mx-2"
+              onClick={handleFacebookLogin}
+            >
+              <i className="bi bi-facebook"></i>
+            </Button>
+          </div>
         </Col>
+
         <Modal
           show={modalShow !== null}
           onHide={handleClose}
@@ -143,68 +189,26 @@ export default function AuthPage() {
           centered
         >
           <Modal.Body>
-  <h2 className="mb-4" style={{ fontWeight: "bold" }}>
-    {modalShow === "signup"
-      ? "Create your account"
-      : "Log in to your account"}
-  </h2>
-
-  {/* Display error message */}
-  {errorMessage && (
-    <p className="text-danger text-center mb-3">
-      {errorMessage}
-    </p>
-  )}
-
-  <Form
-    className="d-grid gap-2 px-5"
-    onSubmit={modalShow === "signup" ? handleSignUp : handleLogin}
-  >
-    <Form.Group className="mb-3" controlId="formBasicEmail">
-      <Form.Control
-        onChange={(e) => setUsername(e.target.value)}
-        type="email"
-        placeholder="Enter email"
-      />
-    </Form.Group>
-
-    <Form.Group className="mb-3" controlId="formBasicPassword">
-      <Form.Control
-        onChange={(e) => setPassword(e.target.value)}
-        type="password"
-        placeholder="Password"
-      />
-    </Form.Group>
-
-    <p style={{ fontSize: 12 }}>
-      By signing up, you agree to the Terms of Service and Privacy
-      Policy, including Cookie Use. SigmaTweets may use your contact
-      information, including your email address and phone number for
-      purposes outlined in our Privacy Policy, like keeping your
-      account secure and personalising our services, including ads.
-      Learn more. Others will be able to find you by email or phone
-      number, when provided, unless you choose otherwise here.
-    </p>
-    <Button className="rounded-pill" type="submit">
-      {modalShow === "signup" ? "Sign up" : "Log in"}
-    </Button>
-  </Form>
-</Modal.Body>
-
-          {/* <Modal.Body>
             <h2 className="mb-4" style={{ fontWeight: "bold" }}>
               {modalShow === "signup"
                 ? "Create your account"
                 : "Log in to your account"}
             </h2>
 
+            {/* Error Message */}
+            {errorMessage && (
+              <p className="text-danger text-center mb-3">
+                {errorMessage}
+              </p>
+            )}
+
             <Form
               className="d-grid gap-2 px-5"
               onSubmit={modalShow === "signup" ? handleSignUp : handleLogin}
             >
-              <Form.Group className="mb-3" controlId="formBasicEmai">
+              <Form.Group className="mb-3" controlId="formBasicEmail">
                 <Form.Control
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   placeholder="Enter email"
                 />
@@ -218,20 +222,11 @@ export default function AuthPage() {
                 />
               </Form.Group>
 
-              <p style={{ fontSize: 12 }}>
-                By signing up, you agree to the Terms of Service and Privacy
-                Policy, including Cookie Use. SigmaTweets may use your contact
-                information, including your email address and phone number for
-                purposes outlined in our Privacy Policy, like keeping your
-                account secure and personalising our services, including ads.
-                Learn more. Others will be able to find you by email or phone
-                number, when provided, unless you choose otherwise here.
-              </p>
               <Button className="rounded-pill" type="submit">
                 {modalShow === "signup" ? "Sign up" : "Log in"}
               </Button>
             </Form>
-          </Modal.Body> */}
+          </Modal.Body>
         </Modal>
       </Col>
     </Row>
