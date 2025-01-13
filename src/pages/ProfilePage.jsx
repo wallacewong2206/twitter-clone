@@ -1,9 +1,8 @@
 import { getAuth } from "firebase/auth";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { Container, Row } from "react-bootstrap";
-import { AuthContext } from "../components/AuthProvider";
 import { useNavigate } from "react-router-dom";
-import useLocalStorage from "use-local-storage";
+import { AuthContext } from "../components/AuthProvider";
 import ProfileSideBar from "../components/ProfileSideBar";
 import ProfileMidBody from "../components/ProfileMidBody";
 
@@ -12,13 +11,15 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const { currentUser } = useContext(AuthContext);
 
-if (!currentUser) {
-  navigate("/login");
-}
+  // Check for authToken immediately upon component mount and whenever authToken changes
 
-const handleLogout = () => {
-  auth.signOut();
-};
+  if (!currentUser) {
+    navigate("/login"); // Redirect to login if no auth token is present
+  }
+
+  const handleLogout = () => {
+    auth.signOut();
+  };
 
   return (
     <>
